@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 		#signal button handling
 		self.md_button.clicked.connect(self.open_md_window)
 
-		#markdow window handling
+		#markdown window handling
 		#testing the possibility to handle multiple windows at once
 		self.md_windows_handler = []
 		self.md_window = HtmlVisualizer()
