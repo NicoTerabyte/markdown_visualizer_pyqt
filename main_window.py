@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt
-from markdown_visualizer import MarkdowVisualiser
+from markdown_visualizer import HtmlVisualizer
 import sys
 import signal
 
@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
 		#markdow window handling
 		#testing the possibility to handle multiple windows at once
 		self.md_windows_handler = []
-		self.md_window = MarkdowVisualiser()
+		self.md_window = HtmlVisualizer()
 
 	def show(self):
 		super().show()
@@ -36,12 +36,12 @@ class MainWindow(QMainWindow):
 		self.setCentralWidget(self.top_container)
 
 	'''
-	I just need one window to do this so there wouldn't be any need for
-	other windows
+	it uses another class that basically does that reader and displayer of html
+	files.
 	'''
 	def open_md_window(self):
 		print("opening window")
-		md_window = MarkdowVisualiser()
+		md_window = HtmlVisualizer()
 		self.md_windows_handler.append(md_window)
 		md_window.show()
 		# self.md_window.show()
