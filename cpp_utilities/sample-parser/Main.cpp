@@ -26,29 +26,33 @@ int main(int argc, char** argv)
 
 	auto start = chrono::system_clock::now();
 
-	MarkdownToHTML parser(false);
+	MarkdownToHTML parser(true);
 	string line;
-	string contents;
+	string answer;
 
-	while(getline(file,line))
+	cerr << LOG_STRING "warning: this will overwrite '" << argv[1]
+		<< "'. Make a backup before running this command." << endl;
+	cout<<"Wanna keep going? [y/n]"<<endl;
+	cin >> answer;
+
+	if (answer == "y")
 	{
-		contents += line;
-		parser.processLine(line);
+		while(getline(file,line))
+			parser.processLine(line);
+
+		ofstream out_file("diff.html");
+		if(!out_file.is_open())
+		{
+			cout << LOG_STRING "error: could not write to file: '" << argv[1] << "'" << endl;
+			return -3;
+		}
+
+		out_file << parser;
+
+		auto end = chrono::system_clock::now();
+		auto dur = (end - start).count() / 1000000.00;
+
+		cout << LOG_STRING "html generation took: " << dur << "s" << endl;
 	}
-
-	ofstream out_file(argv[1]);
-	if(!out_file.is_open())
-	{
-		cout << LOG_STRING "error: could not write to file: '" << argv[1] << "'" << endl;
-		return -3;
-	}
-
-	out_file << parser;
-
-	auto end = chrono::system_clock::now();
-	auto dur = (end - start).count() / 1000000.00;
-
-	cout << LOG_STRING "html generation took: " << dur << "s" << endl;
-
 	return 0;
 }

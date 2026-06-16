@@ -1,17 +1,21 @@
 #include <iostream>
 #include "MarkdownToHTML.h"
 
+//Il booleano semplicemente mette in ordine head e body nella pagina html
 MarkdownToHTML::MarkdownToHTML(bool generateFullPage)
 {
-	rootNode = make_shared<HTMLElement>((generateFullPage) ? "html" : "blank");
-
+	this->rootNode = make_shared<HTMLElement>((generateFullPage) ? "html" : "blank");
+	cout<<"with generate page at "<<generateFullPage<<" we get "<< this->rootNode->get_tag()<<endl;
 	if(generateFullPage)
 	{
-		rootNode->appendChild(make_HTMLElement("head"));
-		insertionPoint = rootNode->appendChild(make_HTMLElement("body"));
+		this->rootNode->appendChild(make_HTMLElement("head"));
+		this->insertionPoint = rootNode->appendChild(make_HTMLElement("body"));
 	}
 	else
-		insertionPoint = rootNode.get();
+	{
+		cout<<"starting blank"<<endl;
+		this->insertionPoint = this->rootNode.get();
+	}
 };
 
 void MarkdownToHTML::processLine(string& input)
@@ -19,9 +23,8 @@ void MarkdownToHTML::processLine(string& input)
 	processEscapeCharacters(input);
 
 	sv_match matches;
-	string_view inputView(input);
 
-	LineType currentLineType = determineLineType(inputView, matches);
+	LineType currentLineType = determineLineType(input, matches);
 
 	if(lineState == inCodeBlock && currentLineType != CodeBlock)
 		currentLineType = Other;
@@ -58,7 +61,7 @@ void MarkdownToHTML::processEscapeCharacters(string& input) const
 	input = regex_replace(input, regex(">"), "&gt;");
 }
 
-LineType MarkdownToHTML::determineLineType(const string_view& input, sv_match& matches)
+LineType MarkdownToHTML::determineLineType(const string& input, sv_match& matches)
 {
 	static const pair<const regex&, LineType> LineRegexAndTypes [] {
 		{headingRegex, Heading},
@@ -69,10 +72,10 @@ LineType MarkdownToHTML::determineLineType(const string_view& input, sv_match& m
 		{emptyRegex, Empty},
 	};
 
-	for(const auto& [r,t] : LineRegexAndTypes)
+	for(const auto& lineRegexAndType : LineRegexAndTypes)
 	{
-		if(regex_match(input.begin(), input.end(), matches, r))
-			return t;
+		if(regex_match(input.begin(), input.end(), matches, lineRegexAndType.first))
+			return lineRegexAndType.second;
 	}
 
 	return Other;
@@ -82,7 +85,7 @@ void MarkdownToHTML::processHeadingLine(const sv_match& matches)
 {
 	if(lineState != inNothing)
 		throw exception();
-
+	// number of #### claro
 	int hSize = matches[1].length();
 	string tag = "h" + to_string(hSize);
 
@@ -102,7 +105,7 @@ void MarkdownToHTML::processUnorderedListItemLine(const sv_match& matches)
 	}
 
 	auto li = make_HTMLElement("li");
-	processSubExpressions(string_view(matches[1].first, matches[1].length()), li);
+	processSubExpressions(matches[1].str(), li);
 	insertionPoint->appendChild(li);
 }
 
@@ -116,7 +119,7 @@ void MarkdownToHTML::processOrderedListItemLine(const sv_match& matches)
 	}
 
 	auto li = make_HTMLElement("li");
-	processSubExpressions(string_view(matches[2].first, matches[2].length()), li);
+	processSubExpressions(matches[2].str(), li);
 	insertionPoint->appendChild(li);
 }
 
@@ -162,7 +165,7 @@ void MarkdownToHTML::processTableLine(const sv_match& matches)
 		if(c == '|')
 		{
 			auto cell = make_HTMLElement(tag_name.c_str());
-			processSubExpressions(string_view(cellValue), cell);
+			processSubExpressions(cellValue, cell);
 			insertionPoint->appendChild(cell);
 
 			cellValue.clear();
@@ -172,7 +175,7 @@ void MarkdownToHTML::processTableLine(const sv_match& matches)
 	}
 
 	auto cell = make_HTMLElement(tag_name.c_str());
-	processSubExpressions(string_view(cellValue), cell);
+	processSubExpressions(cellValue, cell);
 	insertionPoint->appendChild(cell);
 	insertionPoint = insertionPoint->getParent();
 }
@@ -197,7 +200,7 @@ void MarkdownToHTML::processOtherLine(string& input)
 	if(lineState == inNothing)
 	{
 		auto p = make_HTMLElement("p");
-		processSubExpressions(string_view(input), p);
+		processSubExpressions(input, p);
 
 		insertionPoint = insertionPoint->appendChild(p);
 		lineState = inParagraph;
@@ -218,7 +221,7 @@ void MarkdownToHTML::processOtherLine(string& input)
 	}
 }
 
-void MarkdownToHTML::processSubExpressions(const string_view& input, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processSubExpressions(const string& input, shared_ptr<HTMLElement> parent)
 {
 	sv_match matches;
 	ExpressionType currentExpression = determineExpressionType(input, matches);
@@ -243,13 +246,12 @@ void MarkdownToHTML::processSubExpressions(const string_view& input, shared_ptr<
 	}
 }
 
-void MarkdownToHTML::processSubExpressionsBetween(const char* begin, const char* end, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processSubExpressionsBetween(string::const_iterator begin, string::const_iterator end, shared_ptr<HTMLElement> parent)
 {
-	size_t view_length = end - begin;
-	processSubExpressions(string_view(begin, view_length), parent);
+	processSubExpressions(string(begin, end), parent);
 }
 
-ExpressionType MarkdownToHTML::determineExpressionType(const string_view& input, sv_match& matches)
+ExpressionType MarkdownToHTML::determineExpressionType(const string& input, sv_match& matches)
 {
 	static const pair<const regex&, ExpressionType> ExpressionRegexAndTypes [] {
 		{boldRegex, Bold},
@@ -258,16 +260,16 @@ ExpressionType MarkdownToHTML::determineExpressionType(const string_view& input,
 		{linkRegex, Link},
 	};
 
-	for(const auto& [r,t] : ExpressionRegexAndTypes)
+	for(const auto& expressionRegexAndType : ExpressionRegexAndTypes)
 	{
-		if(regex_search(input.begin(), input.end(), matches, r))
-			return t;
+		if(regex_search(input.begin(), input.end(), matches, expressionRegexAndType.first))
+			return expressionRegexAndType.second;
 	}
 
 	return Text;
 }
 
-void MarkdownToHTML::processBoldExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processBoldExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
 {
 	processSubExpressionsBetween(input.begin(), matches[0].first, parent);
 
@@ -278,7 +280,7 @@ void MarkdownToHTML::processBoldExpression(const string_view& input, const sv_ma
 	processSubExpressionsBetween(matches[0].second, input.end(), parent);
 }
 
-void MarkdownToHTML::processItalicExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processItalicExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
 {
 	processSubExpressionsBetween(input.begin(), matches[0].first, parent);
 
@@ -289,7 +291,7 @@ void MarkdownToHTML::processItalicExpression(const string_view& input, const sv_
 	processSubExpressionsBetween(matches[0].second, input.end(), parent);
 }
 
-void MarkdownToHTML::processImageExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processImageExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
 {
 	processSubExpressionsBetween(input.begin(), matches[0].first, parent);
 
@@ -302,7 +304,7 @@ void MarkdownToHTML::processImageExpression(const string_view& input, const sv_m
 	processSubExpressionsBetween(matches[0].second, input.end(), parent);
 }
 
-void MarkdownToHTML::processLinkExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processLinkExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
 {
 	processSubExpressionsBetween(input.begin(), matches[0].first, parent);
 
@@ -314,9 +316,9 @@ void MarkdownToHTML::processLinkExpression(const string_view& input, const sv_ma
 	processSubExpressionsBetween(matches[0].second, input.end(), parent);
 }
 
-void MarkdownToHTML::processTextExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
+void MarkdownToHTML::processTextExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent)
 {
-	parent->appendChild(make_TextElement(string(input).c_str()));
+	parent->appendChild(make_TextElement(input.c_str()));
 }
 
 const HTMLElement& MarkdownToHTML::getcRootNode() const

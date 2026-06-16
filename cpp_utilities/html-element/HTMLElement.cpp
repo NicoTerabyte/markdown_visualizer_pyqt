@@ -19,7 +19,7 @@ HTMLElement* HTMLElement::setSingle(bool _single)
 
 void HTMLElement::generateContents(ostream& stream) const
 {
-    for(const shared_ptr<Element> e : contents)
+    for(const shared_ptr<Element>& e : contents)
         e->generate(stream);
 }
 
@@ -28,8 +28,8 @@ void HTMLElement::generateAttributes(ostream& stream) const
     if(!attributes.empty())
         stream << " ";
 
-    for(const auto& [key,value] : attributes)
-        stream << key  << "='" << value << "' ";
+    for(const auto& attribute : attributes)
+        stream << attribute.first << "='" << attribute.second << "' ";
 }
 
 
@@ -59,4 +59,9 @@ ostream& operator<<(ostream& stream, const Element& elem)
 {
     elem.generate(stream);
     return stream;
+}
+
+string HTMLElement::get_tag()
+{
+    return this->tag;
 }

@@ -49,8 +49,7 @@ enum ExpressionType {
 	Text
 };
 
-// Specialized for string_view
-typedef match_results<std::string_view::const_iterator> sv_match;
+typedef smatch sv_match;
 
 class MarkdownToHTML
 {
@@ -61,7 +60,7 @@ class MarkdownToHTML
 
 	// Line Processing
 	void processEscapeCharacters(string& input) const;
-	LineType determineLineType(const string_view& input, sv_match& matches);
+	LineType determineLineType(const string& input, sv_match& matches);
 	void processHeadingLine(const sv_match& matches);
 	void processUnorderedListItemLine(const sv_match& matches);
 	void processOrderedListItemLine(const sv_match& matches);
@@ -71,14 +70,14 @@ class MarkdownToHTML
 	void processOtherLine(string& input);
 
 	// Expression Processing
-	ExpressionType determineExpressionType(const string_view& input, sv_match& matches);
-	void processSubExpressions(const string_view& input, shared_ptr<HTMLElement> parent);
-	void processSubExpressionsBetween(const char* begin, const char* end, shared_ptr<HTMLElement> parent);
-	void processBoldExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
-	void processItalicExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
-	void processImageExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
-	void processLinkExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
-	void processTextExpression(const string_view& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
+	ExpressionType determineExpressionType(const string& input, sv_match& matches);
+	void processSubExpressions(const string& input, shared_ptr<HTMLElement> parent);
+	void processSubExpressionsBetween(string::const_iterator begin, string::const_iterator end, shared_ptr<HTMLElement> parent);
+	void processBoldExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
+	void processItalicExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
+	void processImageExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
+	void processLinkExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
+	void processTextExpression(const string& input, const sv_match& matches, shared_ptr<HTMLElement> parent);
 
 public:
 	MarkdownToHTML(bool generateFullPage = true);

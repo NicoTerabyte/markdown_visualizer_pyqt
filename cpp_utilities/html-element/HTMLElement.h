@@ -35,6 +35,8 @@ public:
 	HTMLElement* getParent() const { return dynamic_cast<HTMLElement*>(parent); }
 	template<class T> T* appendChild(shared_ptr<T> child);
 	void generate(ostream& stream) const;
+
+	string	get_tag();
 };
 
 class TextElement: public Element
