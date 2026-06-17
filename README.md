@@ -11,7 +11,7 @@ the sample parser is made by him as well
 - [ ] Wildcard per cercare le parole in modo più specifico (esempio re*x regex va bene ma anche recarlox)
 - [x] (extra) cythonizzare un pochino 👽
 
-![cython lore](https://imgflip.com/gif/auje86)
+![cython lore](./gifs_images/cython_kiryu.gif)
 
 ## Mind 🧠
 
