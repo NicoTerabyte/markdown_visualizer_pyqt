@@ -1,7 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QBoxLayout, QHBoxLayout, QTextBrowser, QFileDialog, QLineEdit, QLabel
-
-from PyQt5.QtGui import QTextCursor
-from PyQt5.QtCore import QUrl
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTextBrowser, QFileDialog, QLineEdit, QLabel, QPushButton
+from PyQt5.QtGui import QTextCursor, QTextDocument
 from utils import total_of_occurencies
 
 
@@ -18,6 +16,9 @@ class HtmlVisualizer(QWidget):
 		# normal declaration
 		self.main_layout = QVBoxLayout()
 		self.html_text_layout = QVBoxLayout()
+		self.next_button = QPushButton()
+		self.next_button = QPushButton()
+		self.previous_button = QPushButton()
 
 		#layout for the text in the document
 		self.html_text = QTextBrowser()
@@ -37,10 +38,16 @@ class HtmlVisualizer(QWidget):
 		self.file_content = ""
 
 		#various setups
+		##setText
 		self.bar_title.setText("Search🔎: ")
-		self.search_bar.textChanged.connect(self.update_display)
+		self.next_button.setText("Next occ.")
+		self.previous_button.setText("Prev. occ.")
+		## signal conenct
 		self.search_bar.returnPressed.connect(self.find_next)
-
+		self.search_bar.textChanged.connect(self.update_display)
+		self.next_button.pressed.connect(self.find_next)
+		self.previous_button.pressed.connect(self.find_previous)
+		##others
 		self.total_number_of_occurencies.hide()
 
 		#layout widget logic
@@ -50,6 +57,8 @@ class HtmlVisualizer(QWidget):
 		#searchbar layout
 		self.searchbar_layout.addWidget(self.bar_title)
 		self.searchbar_layout.addWidget(self.search_bar)
+		self.searchbar_layout.addWidget(self.next_button)
+		self.searchbar_layout.addWidget(self.previous_button)
 		self.searchbar_layout.addWidget(self.total_number_of_occurencies)
 		#then i wrap all the layout to the main layout
 		self.main_layout.addLayout(self.searchbar_layout)
@@ -124,5 +133,11 @@ class HtmlVisualizer(QWidget):
 		self.html_text.find(self.search_bar.text())
 
 
+	'''
+	Method to searchbackward. Pylance doesn't seem to find the method "findbackward"
+	of the object QTextDocument, but there is
+	'''
+	def find_previous(self):
+		self.html_text.find(self.search_bar.text(), QTextDocument.FindBackward) # type: ignore
 
 
