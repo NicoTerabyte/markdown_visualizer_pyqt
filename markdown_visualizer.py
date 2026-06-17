@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTextBrowser, QFileDialog, QLineEdit, QLabel, QPushButton
 from PyQt5.QtGui import QTextCursor, QTextDocument
 from utils import count_occurrences
-
+from PyQt5.QtCore import QRegularExpression
 
 '''
 This class purpose is to show and render properly html files
@@ -132,35 +132,51 @@ class HtmlVisualizer(QWidget):
 	and one to keep track at which occurence we are at, the first one the total, can be set once,
 	instead the other occurence tracker has to be updated every time we move to another occurrence
 	both forward and backword
+
+	the wildcard * would change the logic of how i find the text since the find would likely
+	be different. more possibilities would be available and the count of the occurrences would get
+	broken since the count method of the string works only with whole words.
+
+	the wildcard works the same as the regex pattern .* that means anything after the .* whatever it is
+	until it gets a normal letter obviously like re*x will search every word that starts with re and ends with x
+
 	'''
 	def update_display(self, text: str):
 		self.html_text.moveCursor(QTextCursor.Start)
-		self.html_text.find(text)
-		# this label updates over time how at which occurrence of the word the user is at
-		self.counted_occurrences = count_occurrences(self.html_text.toPlainText(), text)
-
-		if self.counted_occurrences != 0:
-			self.occurrence_out_of = 1
-			print("showing number of occurrences")
-			self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
-			self.total_number_of_occurrences.setText("/ " + str(self.counted_occurrences))
-			self.total_number_of_occurrences.show()
-			self.occurrence_out_of_label.show()
-		else:
-			self.occurrence_out_of = 0
-			self.counted_occurrences = 0
+		if "*" in text or ".*" in text:
 			self.total_number_of_occurrences.hide()
 			self.occurrence_out_of_label.hide()
+			self.replace_and_find_with_wildcard(text)
+		else:
+			self.html_text.find(text)
+			# this label updates over time how at which occurrence of the word the user is at
+			self.counted_occurrences = count_occurrences(self.html_text.toPlainText(), text)
+
+			if self.counted_occurrences != 0:
+				self.occurrence_out_of = 1
+				print("showing number of occurrences")
+				self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
+				self.total_number_of_occurrences.setText("/ " + str(self.counted_occurrences))
+				self.total_number_of_occurrences.show()
+				self.occurrence_out_of_label.show()
+			else:
+				self.occurrence_out_of = 0
+				self.counted_occurrences = 0
+				self.total_number_of_occurrences.hide()
+				self.occurrence_out_of_label.hide()
 
 	'''
 	method to check the next word put in the searchbar
 	pressing enter will make it go to the next word
 	'''
 	def find_next(self):
-		if self.occurrence_out_of != 0 and self.occurrence_out_of < self.counted_occurrences:
-			self.occurrence_out_of += 1
-			self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
-			self.html_text.find(self.search_bar.text())
+		if "*" in self.search_bar.text() or ".*" in self.search_bar.text():
+			self.replace_and_find_with_wildcard(self.search_bar.text())
+		else:
+			if self.occurrence_out_of != 0 and self.occurrence_out_of < self.counted_occurrences:
+				self.occurrence_out_of += 1
+				self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
+				self.html_text.find(self.search_bar.text())
 
 
 	'''
@@ -168,9 +184,27 @@ class HtmlVisualizer(QWidget):
 	of the object QTextDocument, but it actually exists
 	'''
 	def find_previous(self):
-		if self.occurrence_out_of != (1 or 0):
-			self.occurrence_out_of -= 1
-			self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
-			self.html_text.find(self.search_bar.text(), QTextDocument.FindBackward) # type: ignore
+		if "*" in self.search_bar.text() or ".*" in self.search_bar.text():
+			self.replace_and_find_with_wildcard(self.search_bar.text(), True)
+		else:
+			if self.occurrence_out_of != (1 or 0):
+				self.occurrence_out_of -= 1
+				self.occurrence_out_of_label.setText("found "+ str(self.occurrence_out_of))
+				self.html_text.find(self.search_bar.text(), QTextDocument.FindBackward) # type: ignore
 
+
+	'''
+	check to understand if i have to make a research with a wildcard (regex)
+	the wildcard * is the same for the .* regex but to actually utilize the regexs
+	without creating one manually i use the QRegularExpression object
+	'''
+	def replace_and_find_with_wildcard(self, text: str, backward: bool = False):
+		print("string before {}".format(text))
+		text = text.replace("*", ".*")
+		print("string after replace {}".format(text))
+		if backward is True:
+			self.html_text.find(QRegularExpression(text), QTextDocument.FindBackward) # type: ignore
+		else:
+
+			self.html_text.find(QRegularExpression(text))
 

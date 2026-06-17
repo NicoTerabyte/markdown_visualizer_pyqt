@@ -8,7 +8,7 @@ the sample parser is made by him as well
 ## New features
 
 - [x] bottoni avanti e indietro per la ricerca, numero di occorrenze della parola
-- [ ] Wildcard per cercare le parole in modo più specifico (esempio re*x regex va bene ma anche recarlox)
+- [x] Wildcard per cercare le parole in modo più specifico (esempio re*x regex va bene ma anche recarlox)
 - [x] (extra) cythonizzare un pochino 👽
 
 ![cython lore](./gifs_images/cython_kiryu.gif)
